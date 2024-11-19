@@ -47,9 +47,18 @@ def initialize_git_repo(project_name):
     # Get the current project folder name (which will be used as the GitHub repo name)
     repo_name = project_name
 
-    # Set up the remote repository on GitHub (empty repository is assumed)
-    remote_url = f"git@github.com:ziadMhCs/{repo_name}.git"
-    run_command(f"git remote add origin {remote_url}")
+    # Check if the remote 'origin' already exists
+    try:
+        remotes = run_command("git remote").strip()
+        if 'origin' not in remotes:
+            print("Adding remote 'origin'...")
+            remote_url = f"git@github.com:ziadMhCs/{repo_name}.git"
+            run_command(f"git remote add origin {remote_url}")
+        else:
+            print("Remote 'origin' already exists. Skipping remote addition.")
+    except Exception as e:
+        print(f"Error checking remote: {e}")
+        exit(1)
 
     # Stage and commit the changes
     print("Staging and committing initial files to git...")
@@ -59,7 +68,15 @@ def initialize_git_repo(project_name):
 def git_sync():
     """ Sync local repository with GitHub (push changes). """
     print("Syncing with remote GitHub repository...")
-    run_command("git push -u origin master")
+
+    # Check if the current branch is 'main', if not, create it
+    current_branch = run_command("git rev-parse --abbrev-ref HEAD").strip()
+    if current_branch != "main":
+        print("No 'main' branch found, creating it...")
+        run_command("git checkout -b main")
+
+    # Now, push the code to the remote 'main' branch
+    run_command("git push -u origin main")
 
 def main():
     # Get the current folder name to match the GitHub repo
